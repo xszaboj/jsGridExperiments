@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Title of the document</title>
+<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.css" />
+<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.min.css" />
+</head>
+
+<body>
+<div id="jsGrid">
+    
+</div>
+
+<script
+  src="https://code.jquery.com/jquery-3.1.1.min.js"
+  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+  crossorigin="anonymous"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.js"></script>
+<script>
+    function getParameterByName(name, url) {
+        if (!url) {
+        url = window.location.href;
+        }
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+    }
+    function isNumber(n){
+        return !isNaN(n);
+    }
+    $(function() {
+ 
+    $("#jsGrid").jsGrid({
+        height: "auto",
+        width: "100%",
+ 
+        sorting: true,
+        paging: false,
+        autoload: false, // do not autoload, load manually with filter
+        filtering: true,
+ 
+        controller: {
+            loadData: function(filter) {
+                var d = $.Deferred();
+                var url = 'http://services.odata.org/V3/(S(3mnweai3qldmghnzfshavfok))/OData/OData.svc/Products';
+                //this logic is specific to oData service and could be different for your implementation
+                //for example the filter could be passed as data object to server
+                if(filter){
+                    if(filter.Rating > 0){
+                        url += '?$filter=Rating%20eq%20'+filter.Rating;
+                    }
+                }
+
+                //get data
+                $.ajax({
+                    url: url,
+                    dataType: "json"
+                }).done(function(response) {
+                    //show data in grid
+                    d.resolve(response.value);
+                });
+ 
+                return d.promise();
+            }
+        },
+ 
+        fields: [
+            { name: "Name", type: "text" },
+            { name: "Description", type: "textarea", width: 150 },
+            { name: "Rating", type: "number", visible: false}, //hide column
+            { name: "Price", type: "number", width: 50,
+                itemTemplate: function(value) {
+                    return value.toFixed(2) + "$"; }
+            }
+        ]
+    });
+
+    var grid = $("#jsGrid").data("JSGrid"); //get jQuery grid object
+    var ratingFilter = getParameterByName('filter'); //get rating from query string
+    var gridFilter = grid.getFilter(); //get grid original filter
+    if(ratingFilter != null && isNumber(ratingFilter)){
+        gridFilter.Rating = parseInt(ratingFilter); //add rating filter
+        grid.search(gridFilter); //call server
+    }
+    else{
+        grid.search();
+    }
+ 
+});
+
+</script>
+</body>
+
+</html>
