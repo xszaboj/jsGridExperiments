@@ -37,19 +37,17 @@
                         }
                     });
             }
-            if (initialLoad) {
                 var gridFilter = initialFilter;
                 if (gridFilter && gridFilter[propertyName]) {
                     $result.val(gridFilter[propertyName]);
                 }
-            }
+            
             return $result;
         }
     }
     
     $(function() {
-        var initialFilter = { Name: 'L'};
-        window.initialLoad = true;
+        var initialFilter = { Name: 'Lemonade'};
     
         $("#jsGrid").jsGrid({
             width: "100%",
