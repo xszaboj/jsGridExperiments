@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Title of the document</title>
+<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.css" />
+<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.min.css" />
+</head>
+
+<body>
+
+<div id="jsGrid">
+    
+</div>
+
+<script
+  src="https://code.jquery.com/jquery-3.1.1.min.js"
+  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+  crossorigin="anonymous"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.js"></script>
+<script>
+    
+    function loadProducts(data){
+        var names = [{Item: ""}];
+        for(var i =0; i< data.length; i++){
+            var name = data[i].Name;
+            names.push({ Item: name});
+        }
+        return names;
+    }
+
+    function createGrid(productNames){
+        $("#jsGrid").jsGrid({
+            width: "100%",
+            
+            sorting: true,
+            paging: false,
+            filtering: true,
+            autoload: true,
+    
+            controller: {
+                loadData: function(filter) {
+                    var d = $.Deferred();
+                    var url = 'http://services.odata.org/V3/(S(3mnweai3qldmghnzfshavfok))/OData/OData.svc/Products';
+                    //this logic is specific to oData service and could be different for your implementation
+                    //for example the filter could be passed as data object to server
+                    if(filter){
+                        if(filter.Name){
+                            url += "?$filter=startswith(Name,'"+filter.Name+"') eq true";
+                        }
+                    }
+
+                    //get data
+                    $.ajax({
+                        url: url,
+                        dataType: "json"
+                    }).done(function(response) {
+                        //show data in grid
+                        d.resolve(response.value);
+                    });
+    
+                    return d.promise();
+                }
+            },
+    
+            fields: [
+                { name: "Name", type: "select", items: productNames, valueField: "Item", textField: "Item" }, //setup select
+                { name: "Description", type: "textarea", width: 150 },
+                { name: "Rating", type: "number"}, 
+                { name: "Price", type: "number", width: 50,
+                    itemTemplate: function(value) {
+                        return value.toFixed(2) + "$"; }
+                }
+            ]
+        });
+    }
+
+    $(function() {
+        $.ajax({
+            url: 'http://services.odata.org/V3/(S(3mnweai3qldmghnzfshavfok))/OData/OData.svc/Products',
+            dataType: "json"
+        }).done(function(response) {
+            var data = loadProducts(response.value);
+            createGrid(data);
+        });
+        
+    });
+
+</script>
+</body>
+
+</html>
